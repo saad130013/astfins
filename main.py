@@ -75,3 +75,40 @@ if selected_category:
         <tr><td>📤 ترحيل القيد</td><td>يتم ترحيله إلى دفاتر الأستاذ العام في نهاية اليوم أو الشهر.</td></tr>
         </table>
         """, unsafe_allow_html=True)
+
+
+# -------------------------------
+st.markdown("<hr style='margin-top:3rem;'>", unsafe_allow_html=True)
+st.subheader("🤖 الذكاء الصناعي: اقتراح قيد محاسبي حسب الوصف")
+
+user_input = st.text_input("🧠 اكتب وصف العملية أو الأصل (مثال: شراء جهاز حاسب آلي):")
+
+if user_input:
+    import joblib
+    import numpy as np
+
+    # تحميل النموذج والبيانات
+    vectorizer = joblib.load("tfidf_vectorizer.pkl")
+    matrix = joblib.load("tfidf_matrix.pkl")
+    with open("tfidf_metadata.json", "r", encoding="utf-8") as f:
+        meta = json.load(f)
+
+    # معالجة النص وإيجاد أقرب وصف
+    user_vec = vectorizer.transform([user_input])
+    similarities = cosine_similarity(user_vec, matrix).flatten()
+    best_idx = np.argmax(similarities)
+    result = meta[best_idx]
+
+    st.success(f"📂 تطابق مع: {result['section']} - {result['sub_title']}")
+
+    st.markdown("#### 🔢 القيد المقترح:")
+    for e in result["entries"]:
+        st.write(f"- {e}")
+
+    st.markdown("#### 📌 المتطلبات:")
+    for r in result["requirements"]:
+        st.write(f"- {r}")
+
+    st.markdown("#### 💡 التوجيهات:")
+    for g in result["guidelines"]:
+        st.write(f"- {g}")
